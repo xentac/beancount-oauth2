@@ -1,0 +1,26 @@
+proxy:
+  image: nginx
+  ports:
+  - "80:80"
+  - "443:443"
+  links:
+  - oauth
+  volumes:
+  - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+  - ./nginx/sslcert.crt:/etc/nginx/sslcert.crt
+  - ./nginx/sslcert.key:/etc/nginx/sslcert.key
+oauth:
+  image: skippy/oauth2_proxy
+  entrypoint: oauth2_proxy -redirect-url="https://<yourdomain>/oauth2/callback" -request-logging=true -client-id="<client-id>" -client-secret="<client-secret>" -http-address="0.0.0.0:4180" -provider=google -upstream="http://beancount:5000" -cookie-secret="<cookie-secret>" -cookie-httponly="true" -cookie-secure="true" -authenticated-emails-file=/etc/authenticated-emails
+  volumes:
+  - ./authenticated-emails:/etc/authenticated-emails
+  links:
+  - beancount
+beancount:
+  image: yegle/fava
+  volumes:
+  - /absolute/path/to/beancount/directory:/data
+  environment:
+    LC_ALL: C.UTF-8
+    LANG: C.UTF-8
+    BEANCOUNT_INPUT_FILE: /data/<beancount.filename>
